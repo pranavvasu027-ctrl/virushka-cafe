@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Payment - Virushka Cafe</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+            VIRUSHKA CAFE
+        </div>
+
+        <ul class="nav-links">
+
+            <li><a href="index.html">Home</a></li>
+
+            <li><a href="menu.html">Menu</a></li>
+
+            <li><a href="cart.html">Cart</a></li>
+
+        </ul>
+
+    </nav>
+
+    <!-- PAYMENT SECTION -->
+
+    <section class="payment-section">
+
+        <h1>Payment Page</h1>
+
+        <div class="payment-box">
+
+            <h2>
+                Total Amount:
+                ₹<span id="payment-total">0</span>
+            </h2>
+
+            <!-- QR IMAGE -->
+
+            <img src="images/qr.png"
+                 alt="QR Code"
+                 class="qr-image">
+
+            <p class="payment-text">
+                Scan QR Code and complete payment
+            </p>
+
+            <!-- TRANSACTION ID -->
+
+            <input type="text"
+                   id="transaction-id"
+                   placeholder="Enter Transaction ID">
+
+            <!-- SCREENSHOT -->
+
+            <input type="file"
+                   id="payment-screenshot">
+
+            <!-- BUTTON -->
+
+            <button onclick="confirmPayment()">
+                Confirm Payment
+            </button>
+
+        </div>
+
+    </section>
+
+    <script src="js/app.js"></script>
+
+</body>
+
+</html>

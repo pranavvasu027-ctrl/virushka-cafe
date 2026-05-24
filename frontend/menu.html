@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Menu - Virushka Cafe</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+            VIRUSHKA CAFE
+        </div>
+
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="menu.html">Menu</a></li>
+            <li><a href="cart.html">Cart</a></li>
+        </ul>
+
+    </nav>
+
+    <!-- MENU SECTION -->
+
+    <section class="menu-section">
+
+        <h1 class="menu-title">Our Menu</h1>
+
+        <div class="menu-container">
+
+            <!-- ITEM 1 -->
+
+            <div class="menu-card">
+
+                <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd"
+                    alt="Burger">
+
+                <h2>Burger</h2>
+
+                <p>Delicious Veg Burger</p>
+
+                <h3>₹80</h3>
+
+                <button onclick="addToCart('Burger',80)">
+                    Add to Cart
+                </button>
+
+            </div>
+
+            <!-- ITEM 2 -->
+
+            <div class="menu-card">
+
+                <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591"
+                    alt="Pizza">
+
+                <h2>Pizza</h2>
+
+                <p>Cheesy Pizza</p>
+
+                <h3>₹120</h3>
+
+                <button onclick="addToCart('Pizza',120)">
+                    Add to Cart
+                </button>
+
+            </div>
+
+            <!-- ITEM 3 -->
+
+            <div class="menu-card">
+
+                <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5"
+                    alt="Pasta">
+
+                <h2>Pasta</h2>
+
+                <p>Creamy White Sauce Pasta</p>
+
+                <h3>₹100</h3>
+
+                <button onclick="addToCart('Pasta',100)">
+                    Add to Cart
+                </button>
+
+            </div>
+
+            <!-- ITEM 4 -->
+
+            <div class="menu-card">
+
+                <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93"
+                    alt="Coffee">
+
+                <h2>Coffee</h2>
+
+                <p>Hot Coffee</p>
+
+                <h3>₹40</h3>
+
+                <button onclick="addToCart('Coffee',40)">
+                    Add to Cart
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <script src="js/app.js"></script>
+
+</body>
+
+</html>
