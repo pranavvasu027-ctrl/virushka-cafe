@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Virushka Cafe Admin</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+    <!-- ========================= -->
+    <!-- HEADER -->
+    <!-- ========================= -->
+
+    <header>
+
+        <h1>VIRUSHKA CAFE ADMIN</h1>
+
+    </header>
+
+    <!-- ========================= -->
+    <!-- DASHBOARD -->
+    <!-- ========================= -->
+
+    <section class="dashboard">
+
+        <div class="card">
+
+            <h2 id="total-orders">0</h2>
+
+            <p>Total Orders</p>
+
+        </div>
+
+        <div class="card pending">
+
+            <h2 id="pending-orders">0</h2>
+
+            <p>Pending Orders</p>
+
+        </div>
+
+        <div class="card verified">
+
+            <h2 id="verified-orders">0</h2>
+
+            <p>Verified Orders</p>
+
+        </div>
+
+        <div class="card earnings">
+
+            <h2>₹<span id="total-earnings">0</span></h2>
+
+            <p>Total Earnings</p>
+
+        </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- ORDERS -->
+    <!-- ========================= -->
+
+    <section class="orders-section">
+
+        <h2>All Orders</h2>
+
+        <div id="orders-container"></div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- SCRIPT -->
+    <!-- ========================= -->
+
+    <script>
+
+        // =========================
+        // LOAD ORDERS
+        // =========================
+
+        async function loadOrders() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        "http://127.0.0.1:5000/get-orders"
+                    );
+
+                const orders =
+                    await response.json();
+
+                const container =
+                    document.getElementById(
+                        "orders-container"
+                    );
+
+                container.innerHTML = "";
+
+                // DASHBOARD VALUES
+
+                let totalOrders = orders.length;
+
+                let pendingOrders = 0;
+
+                let verifiedOrders = 0;
+
+                let earnings = 0;
+
+                // LOOP THROUGH ORDERS
+
+                orders.reverse().forEach(order => {
+
+                    if (
+                        order.paymentStatus ===
+                        "Pending Verification"
+                    ) {
+
+                        pendingOrders++;
+                    }
+
+                    if (
+                        order.paymentStatus ===
+                        "Verified"
+                    ) {
+
+                        verifiedOrders++;
+
+                        earnings += order.totalAmount;
+                    }
+
+                    // ITEMS LIST
+
+                    let itemsHTML = "";
+
+                    order.items.forEach(item => {
+
+                        itemsHTML += `
+                        
+                        <li>
+                            ${item.name}
+                            x ${item.quantity}
+                            - ₹${item.price}
+                        </li>
+                        `;
+                    });
+
+                    // ORDER CARD
+
+                    const orderDiv =
+                        document.createElement("div");
+
+                    orderDiv.classList.add(
+                        "order-card"
+                    );
+
+                    // STATUS COLOR
+
+                    let statusClass =
+                        "pending-status";
+
+                    if (
+                        order.orderStatus ===
+                        "Preparing"
+                    ) {
+
+                        statusClass =
+                            "preparing-status";
+                    }
+
+                    if (
+                        order.orderStatus ===
+                        "Ready"
+                    ) {
+
+                        statusClass =
+                            "ready-status";
+                    }
+
+                    if (
+                        order.orderStatus ===
+                        "Completed"
+                    ) {
+
+                        statusClass =
+                            "completed-status";
+                    }
+
+                    // HTML
+
+                    orderDiv.innerHTML = `
+
+                    <div class="top-row">
+
+                        <h3>
+                        Order ID:
+                        ${order._id}
+                        </h3>
+
+                        <span class="${statusClass}">
+                            ${order.orderStatus}
+                        </span>
+
+                    </div>
+
+                    <p>
+                    <strong>Transaction ID:</strong>
+                    ${order.transactionId}
+                    </p>
+
+                    <p>
+                    <strong>Payment:</strong>
+                    ${order.paymentStatus}
+                    </p>
+
+                    <p>
+                    <strong>Total:</strong>
+                    ₹${order.totalAmount}
+                    </p>
+
+                    <strong>Items:</strong>
+
+                    <ul>
+                        ${itemsHTML}
+                    </ul>
+
+                    <div class="button-group">
+
+                        <button class="verify-btn"
+                        onclick="verifyOrder(
+                            '${order._id}'
+                        )">
+
+                            Verify
+
+                        </button>
+
+                        <button class="prepare-btn"
+                        onclick="updateStatus(
+                            '${order._id}',
+                            'Preparing'
+                        )">
+
+                            Preparing
+
+                        </button>
+
+                        <button class="ready-btn"
+                        onclick="updateStatus(
+                            '${order._id}',
+                            'Ready'
+                        )">
+
+                            Ready
+
+                        </button>
+
+                        <button class="complete-btn"
+                        onclick="updateStatus(
+                            '${order._id}',
+                            'Completed'
+                        )">
+
+                            Completed
+
+                        </button>
+
+                        <button class="delete-btn"
+                        onclick="deleteOrder(
+                            '${order._id}'
+                        )">
+
+                            Delete
+
+                        </button>
+
+                    </div>
+                    `;
+
+                    container.appendChild(orderDiv);
+
+                });
+
+                // DASHBOARD UPDATE
+
+                document.getElementById(
+                    "total-orders"
+                ).innerText = totalOrders;
+
+                document.getElementById(
+                    "pending-orders"
+                ).innerText = pendingOrders;
+
+                document.getElementById(
+                    "verified-orders"
+                ).innerText = verifiedOrders;
+
+                document.getElementById(
+                    "total-earnings"
+                ).innerText = earnings;
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert("Failed to load orders");
+            }
+        }
+
+        // =========================
+        // VERIFY ORDER
+        // =========================
+
+        async function verifyOrder(orderId) {
+
+            try {
+
+                const response =
+                    await fetch(
+                        "http://127.0.0.1:5000/verify-order",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+                                orderId: orderId
+                            })
+                        }
+                    );
+
+                const result =
+                    await response.json();
+
+                alert(result.message);
+
+                loadOrders();
+
+            } catch (error) {
+
+                console.error(error);
+            }
+        }
+
+        // =========================
+        // UPDATE STATUS
+        // =========================
+
+        async function updateStatus(
+            orderId,
+            status
+        ) {
+
+            try {
+
+                const response =
+                    await fetch(
+                        "http://127.0.0.1:5000/update-status",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+
+                                orderId: orderId,
+
+                                status: status
+                            })
+                        }
+                    );
+
+                const result =
+                    await response.json();
+
+                alert(result.message);
+
+                loadOrders();
+
+            } catch (error) {
+
+                console.error(error);
+            }
+        }
+
+        // =========================
+        // DELETE ORDER
+        // =========================
+
+        async function deleteOrder(orderId) {
+
+            const confirmDelete =
+                confirm(
+                    "Delete this order?"
+                );
+
+            if (!confirmDelete) return;
+
+            try {
+
+                const response =
+                    await fetch(
+                        "http://127.0.0.1:5000/delete-order",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+                                orderId: orderId
+                            })
+                        }
+                    );
+
+                const result =
+                    await response.json();
+
+                alert(result.message);
+
+                loadOrders();
+
+            } catch (error) {
+
+                console.error(error);
+            }
+        }
+
+        // =========================
+        // AUTO LOAD
+        // =========================
+
+        loadOrders();
+
+        // AUTO REFRESH
+
+        setInterval(loadOrders, 5000);
+
+    </script>
+
+</body>
+
+</html>

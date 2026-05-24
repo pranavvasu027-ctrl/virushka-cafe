@@ -6,49 +6,242 @@
     <meta charset="UTF-8">
 
     <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+        content="width=device-width, initial-scale=1.0">
 
     <title>Order Status</title>
 
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet"
+        href="css/style.css">
 
 </head>
 
 <body>
 
-    <section class="status-section">
+    <!-- ========================= -->
+    <!-- HEADER -->
+    <!-- ========================= -->
+
+    <header>
+
+        <h1>TRACK YOUR ORDER</h1>
+
+    </header>
+
+    <!-- ========================= -->
+    <!-- STATUS CONTAINER -->
+    <!-- ========================= -->
+
+    <section class="status-container">
 
         <div class="status-box">
 
-            <h1>Order Confirmed ✅</h1>
+            <h1>🍽️ VIRUSHKA CAFE</h1>
 
-            <h2>Token Number: #27</h2>
+            <h2>Your Order Status</h2>
 
-            <p>Your order is being prepared.</p>
+            <!-- LIVE STATUS -->
 
             <div class="status-flow">
 
-                <div class="status active">
+                <div class="status active"
+                    id="status1">
+
                     Payment Verified
+
                 </div>
 
-                <div class="status active">
+                <div class="status"
+                    id="status2">
+
                     Preparing
+
                 </div>
 
-                <div class="status">
+                <div class="status"
+                    id="status3">
+
                     Ready
+
                 </div>
 
-                <div class="status">
-                    Delivered
+                <div class="status"
+                    id="status4">
+
+                    Completed
+
                 </div>
+
+            </div>
+
+            <!-- ORDER DETAILS -->
+
+            <div class="live-order-info">
+
+                <p>
+                    <strong>Order ID:</strong>
+                    <span id="order-id">
+                        Loading...
+                    </span>
+                </p>
+
+                <p>
+                    <strong>Current Status:</strong>
+                    <span id="current-status">
+                        Loading...
+                    </span>
+                </p>
 
             </div>
 
         </div>
 
     </section>
+
+    <!-- ========================= -->
+    <!-- SCRIPT -->
+    <!-- ========================= -->
+
+    <script>
+
+        // =========================
+        // GET ORDER ID
+        // =========================
+
+        const orderId =
+            localStorage.getItem("latestOrderId");
+
+        // DISPLAY ORDER ID
+
+        document.getElementById(
+            "order-id"
+        ).innerText = orderId;
+
+        // =========================
+        // LOAD ORDER STATUS
+        // =========================
+
+        async function loadOrderStatus() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        "http://127.0.0.1:5000/get-orders"
+                    );
+
+                const orders =
+                    await response.json();
+
+                // FIND CURRENT ORDER
+
+                const order =
+                    orders.find(
+                        o => o._id === orderId
+                    );
+
+                if (!order) return;
+
+                // DISPLAY CURRENT STATUS
+
+                document.getElementById(
+                    "current-status"
+                ).innerText =
+                    order.orderStatus;
+
+                // RESET
+
+                document.getElementById(
+                    "status1"
+                ).classList.remove("active");
+
+                document.getElementById(
+                    "status2"
+                ).classList.remove("active");
+
+                document.getElementById(
+                    "status3"
+                ).classList.remove("active");
+
+                document.getElementById(
+                    "status4"
+                ).classList.remove("active");
+
+                // STATUS FLOW
+
+                if (
+                    order.orderStatus ===
+                    "Preparing"
+                ) {
+
+                    document.getElementById(
+                        "status1"
+                    ).classList.add("active");
+
+                    document.getElementById(
+                        "status2"
+                    ).classList.add("active");
+                }
+
+                if (
+                    order.orderStatus ===
+                    "Ready"
+                ) {
+
+                    document.getElementById(
+                        "status1"
+                    ).classList.add("active");
+
+                    document.getElementById(
+                        "status2"
+                    ).classList.add("active");
+
+                    document.getElementById(
+                        "status3"
+                    ).classList.add("active");
+                }
+
+                if (
+                    order.orderStatus ===
+                    "Completed"
+                ) {
+
+                    document.getElementById(
+                        "status1"
+                    ).classList.add("active");
+
+                    document.getElementById(
+                        "status2"
+                    ).classList.add("active");
+
+                    document.getElementById(
+                        "status3"
+                    ).classList.add("active");
+
+                    document.getElementById(
+                        "status4"
+                    ).classList.add("active");
+                }
+
+            } catch (error) {
+
+                console.error(error);
+            }
+        }
+
+        // =========================
+        // AUTO LOAD
+        // =========================
+
+        loadOrderStatus();
+
+        // AUTO REFRESH
+
+        setInterval(
+            loadOrderStatus,
+            3000
+        );
+
+    </script>
 
 </body>
 
