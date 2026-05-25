@@ -1,24 +1,18 @@
+import os
 import certifi
 from pymongo import MongoClient
+from dotenv import load_dotenv
 
-# ==========================================
-# MONGODB CONNECTION
-# ==========================================
+load_dotenv()
+
+MONGO_URI = os.getenv("MONGO_URI")
 
 client = MongoClient(
-    "mongodb+srv://pranavvasu027_db_user:Pranav27@cluster0.icnppne.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+    MONGO_URI,
     tlsCAFile=certifi.where()
 )
 
-# ==========================================
-# DATABASE
-# ==========================================
-
 db = client["virushka_cafe"]
 
-# ==========================================
-# COLLECTIONS
-# ==========================================
-
-orders_collection   = db["orders"]
-counters_collection = db["counters"]   # for auto order numbers
+orders_collection = db["orders"]
+counters_collection = db["counters"]
