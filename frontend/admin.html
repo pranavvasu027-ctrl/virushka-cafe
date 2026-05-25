@@ -1,233 +1,283 @@
-<script src="js/config.js"></script>
+<!DOCTYPE html>
+<html lang="en">
 
-<script>
+<head>
 
-async function loadOrders() {
+    <meta charset="UTF-8">
 
-    try {
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        const response = await fetch(`${API_URL}/get-orders`);
+    <title>Admin Panel - Virushka Cafe</title>
 
-        const orders = await response.json();
+    <link rel="stylesheet" href="css/style.css">
 
-        const ordersContainer =
-            document.getElementById("orders-container");
+</head>
 
-        ordersContainer.innerHTML = "";
+<body>
 
-        let totalOrders = orders.length;
+    <nav class="navbar">
 
-        let pendingPayments = 0;
+        <h1>⚡ VIRUSHKA CAFE ADMIN</h1>
 
-        let verifiedOrders = 0;
+        <button onclick="logout()">Logout</button>
 
-        let totalRevenue = 0;
+    </nav>
 
-        orders.reverse();
+    <div class="container">
 
-        orders.forEach(order => {
+        <div class="analytics">
 
-            if (order.paymentStatus !== "Verified") {
-                pendingPayments++;
+            <div class="card">
+                <h2 id="total-orders">0</h2>
+                <p>Total Orders</p>
+            </div>
+
+            <div class="card">
+                <h2 id="pending-payments">0</h2>
+                <p>Pending Payment</p>
+            </div>
+
+            <div class="card">
+                <h2 id="verified-orders">0</h2>
+                <p>Verified Orders</p>
+            </div>
+
+            <div class="card">
+                <h2>₹<span id="total-revenue">0</span></h2>
+                <p>Total Revenue</p>
+            </div>
+
+        </div>
+
+        <h2>All Orders</h2>
+
+        <div id="orders-container"></div>
+
+    </div>
+
+    <script src="js/config.js"></script>
+
+    <script>
+
+        function logout() {
+
+            localStorage.removeItem("adminLoggedIn");
+
+            window.location.href = "admin-login.html";
+        }
+
+        async function loadOrders() {
+
+            try {
+
+                const response = await fetch(`${API_URL}/get-orders`);
+
+                const orders = await response.json();
+
+                const ordersContainer =
+                    document.getElementById("orders-container");
+
+                ordersContainer.innerHTML = "";
+
+                let totalOrders = orders.length;
+
+                let pendingPayments = 0;
+
+                let verifiedOrders = 0;
+
+                let totalRevenue = 0;
+
+                orders.reverse();
+
+                orders.forEach(order => {
+
+                    if (order.paymentStatus !== "Verified") {
+
+                        pendingPayments++;
+                    }
+
+                    if (order.paymentStatus === "Verified") {
+
+                        verifiedOrders++;
+
+                        totalRevenue += order.totalAmount;
+                    }
+
+                    let itemsHTML = "";
+
+                    order.items.forEach(item => {
+
+                        itemsHTML += `
+                            <li>
+                                ${item.name} × ${item.quantity}
+                            </li>
+                        `;
+                    });
+
+                    ordersContainer.innerHTML += `
+
+                        <div class="order-card">
+
+                            <h3>
+                                Order #${order.orderNumber || "N/A"}
+                            </h3>
+
+                            <p>
+                                <strong>Transaction ID:</strong>
+                                ${order.transactionId}
+                            </p>
+
+                            <p>
+                                <strong>Total:</strong>
+                                ₹${order.totalAmount}
+                            </p>
+
+                            <p>
+                                <strong>Payment:</strong>
+                                ${order.paymentStatus}
+                            </p>
+
+                            <p>
+                                <strong>Status:</strong>
+                                ${order.orderStatus}
+                            </p>
+
+                            <ul>
+                                ${itemsHTML}
+                            </ul>
+
+                            <div class="buttons">
+
+                                <button onclick="verifyOrder('${order._id}')">
+                                    Verify
+                                </button>
+
+                                <button onclick="updateStatus('${order._id}', 'Preparing')">
+                                    Preparing
+                                </button>
+
+                                <button onclick="updateStatus('${order._id}', 'Ready')">
+                                    Ready
+                                </button>
+
+                                <button onclick="updateStatus('${order._id}', 'Completed')">
+                                    Completed
+                                </button>
+
+                                <button onclick="deleteOrder('${order._id}')">
+                                    Delete
+                                </button>
+
+                            </div>
+
+                        </div>
+                    `;
+                });
+
+                document.getElementById("total-orders").innerText =
+                    totalOrders;
+
+                document.getElementById("pending-payments").innerText =
+                    pendingPayments;
+
+                document.getElementById("verified-orders").innerText =
+                    verifiedOrders;
+
+                document.getElementById("total-revenue").innerText =
+                    totalRevenue;
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "Failed to load orders. Backend connection error."
+                );
             }
+        }
 
-            if (order.paymentStatus === "Verified") {
-                verifiedOrders++;
-                totalRevenue += order.totalAmount;
+        async function verifyOrder(orderId) {
+
+            try {
+
+                await fetch(`${API_URL}/verify-order`, {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        orderId: orderId
+                    })
+                });
+
+                loadOrders();
+
+            } catch (error) {
+
+                console.error(error);
             }
+        }
 
-            let itemsHTML = "";
+        async function updateStatus(orderId, status) {
 
-            order.items.forEach(item => {
+            try {
 
-                itemsHTML += `
-                    <li>
-                        ${item.name}
-                        × ${item.quantity}
-                    </li>
-                `;
-            });
+                await fetch(`${API_URL}/update-status`, {
 
-            ordersContainer.innerHTML += `
+                    method: "POST",
 
-                <div class="order-card">
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
 
-                    <h3>
-                        Order #${order.orderNumber || "N/A"}
-                    </h3>
+                    body: JSON.stringify({
+                        orderId: orderId,
+                        status: status
+                    })
+                });
 
-                    <p>
-                        <strong>Transaction ID:</strong>
-                        ${order.transactionId}
-                    </p>
+                loadOrders();
 
-                    <p>
-                        <strong>Total:</strong>
-                        ₹${order.totalAmount}
-                    </p>
+            } catch (error) {
 
-                    <p>
-                        <strong>Payment:</strong>
-                        ${order.paymentStatus}
-                    </p>
+                console.error(error);
+            }
+        }
 
-                    <p>
-                        <strong>Status:</strong>
-                        ${order.orderStatus}
-                    </p>
+        async function deleteOrder(orderId) {
 
-                    <ul>
-                        ${itemsHTML}
-                    </ul>
+            try {
 
-                    <div class="buttons">
+                await fetch(`${API_URL}/delete-order`, {
 
-                        <button onclick="verifyOrder('${order._id}')">
-                            Verify
-                        </button>
+                    method: "POST",
 
-                        <button onclick="updateStatus('${order._id}', 'Preparing')">
-                            Preparing
-                        </button>
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
 
-                        <button onclick="updateStatus('${order._id}', 'Ready')">
-                            Ready
-                        </button>
+                    body: JSON.stringify({
+                        orderId: orderId
+                    })
+                });
 
-                        <button onclick="updateStatus('${order._id}', 'Completed')">
-                            Completed
-                        </button>
+                loadOrders();
 
-                        <button onclick="deleteOrder('${order._id}')">
-                            Delete
-                        </button>
+            } catch (error) {
 
-                    </div>
-
-                </div>
-            `;
-        });
-
-        document.getElementById("total-orders").innerText =
-            totalOrders;
-
-        document.getElementById("pending-payments").innerText =
-            pendingPayments;
-
-        document.getElementById("verified-orders").innerText =
-            verifiedOrders;
-
-        document.getElementById("total-revenue").innerText =
-            totalRevenue;
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            "Failed to load orders. Backend connection error."
-        );
-    }
-}
-
-
-// ========================================
-// VERIFY ORDER
-// ========================================
-
-async function verifyOrder(orderId) {
-
-    try {
-
-        await fetch(`${API_URL}/verify-order`, {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                orderId: orderId
-            })
-        });
+                console.error(error);
+            }
+        }
 
         loadOrders();
 
-    } catch (error) {
+        setInterval(loadOrders, 5000);
 
-        console.error(error);
-    }
-}
+    </script>
 
+</body>
 
-// ========================================
-// UPDATE STATUS
-// ========================================
-
-async function updateStatus(orderId, status) {
-
-    try {
-
-        await fetch(`${API_URL}/update-status`, {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                orderId: orderId,
-                status: status
-            })
-        });
-
-        loadOrders();
-
-    } catch (error) {
-
-        console.error(error);
-    }
-}
-
-
-// ========================================
-// DELETE ORDER
-// ========================================
-
-async function deleteOrder(orderId) {
-
-    try {
-
-        await fetch(`${API_URL}/delete-order`, {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                orderId: orderId
-            })
-        });
-
-        loadOrders();
-
-    } catch (error) {
-
-        console.error(error);
-    }
-}
-
-
-// ========================================
-// AUTO REFRESH
-// ========================================
-
-loadOrders();
-
-setInterval(loadOrders, 5000);
-
-</script>
+</html>
