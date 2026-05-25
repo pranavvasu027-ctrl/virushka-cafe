@@ -1,0 +1,1 @@
+const API_URL = "https://virushka-cafe-csso.onrender.com";

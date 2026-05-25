@@ -9,18 +9,10 @@ app = Flask(__name__)
 CORS(app)
 
 
-# ==========================================
-# HOME
-# ==========================================
-
 @app.route("/")
 def home():
     return "Virushka Cafe Backend Running"
 
-
-# ==========================================
-# HELPER — get next order number
-# ==========================================
 
 def get_next_order_number():
 
@@ -33,10 +25,6 @@ def get_next_order_number():
 
     return counter["seq"]
 
-
-# ==========================================
-# PLACE ORDER
-# ==========================================
 
 @app.route("/place-order", methods=["POST"])
 def place_order():
@@ -74,10 +62,6 @@ def place_order():
         })
 
 
-# ==========================================
-# GET ALL ORDERS
-# ==========================================
-
 @app.route("/get-orders", methods=["GET"])
 def get_orders():
 
@@ -102,10 +86,6 @@ def get_orders():
             "message": str(e)
         })
 
-
-# ==========================================
-# VERIFY ORDER
-# ==========================================
 
 @app.route("/verify-order", methods=["POST"])
 def verify_order():
@@ -138,10 +118,6 @@ def verify_order():
             "message": str(e)
         })
 
-
-# ==========================================
-# UPDATE ORDER STATUS
-# ==========================================
 
 @app.route("/update-status", methods=["POST"])
 def update_status():
@@ -176,10 +152,6 @@ def update_status():
         })
 
 
-# ==========================================
-# DELETE ORDER
-# ==========================================
-
 @app.route("/delete-order", methods=["POST"])
 def delete_order():
 
@@ -205,10 +177,6 @@ def delete_order():
             "message": str(e)
         })
 
-
-# ==========================================
-# ANALYTICS
-# ==========================================
 
 @app.route("/get-analytics", methods=["GET"])
 def get_analytics():
@@ -308,10 +276,6 @@ def get_analytics():
             "message": str(e)
         })
 
-
-# ==========================================
-# RUN
-# ==========================================
 
 if __name__ == "__main__":
 
