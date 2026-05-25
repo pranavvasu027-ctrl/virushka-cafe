@@ -1,3 +1,4 @@
+import certifi
 from pymongo import MongoClient
 
 # ==========================================
@@ -5,7 +6,8 @@ from pymongo import MongoClient
 # ==========================================
 
 client = MongoClient(
-    "mongodb+srv://pranavvasu027_db_user:Pranav27@cluster0.icnppne.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+    "mongodb+srv://pranavvasu027_db_user:Pranav27@cluster0.icnppne.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+    tlsCAFile=certifi.where()
 )
 
 # ==========================================
@@ -15,7 +17,8 @@ client = MongoClient(
 db = client["virushka_cafe"]
 
 # ==========================================
-# COLLECTION
+# COLLECTIONS
 # ==========================================
 
-orders_collection = db["orders"]
+orders_collection   = db["orders"]
+counters_collection = db["counters"]   # for auto order numbers

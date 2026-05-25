@@ -2,78 +2,50 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment - Virushka Cafe</title>
-
     <link rel="stylesheet" href="css/style.css">
-
 </head>
 
 <body>
 
     <!-- NAVBAR -->
-
     <nav class="navbar">
-
-        <div class="logo">
-            VIRUSHKA CAFE
-        </div>
-
+        <div class="logo">VIRUSHKA CAFE</div>
         <ul class="nav-links">
-
             <li><a href="index.html">Home</a></li>
-
             <li><a href="menu.html">Menu</a></li>
-
             <li><a href="cart.html">Cart</a></li>
-
         </ul>
-
     </nav>
 
     <!-- PAYMENT SECTION -->
-
     <section class="payment-section">
 
-        <h1>Payment Page</h1>
+        <h1>Complete Payment</h1>
 
         <div class="payment-box">
 
-            <h2>
-                Total Amount:
-                ₹<span id="payment-total">0</span>
-            </h2>
+            <h2>Total: ₹<span id="payment-total">0</span></h2>
 
-            <!-- QR IMAGE -->
-
+            <!-- QR CODE -->
             <img src="images/qr.png"
-                 alt="QR Code"
+                 alt="UPI QR Code"
                  class="qr-image">
 
             <p class="payment-text">
-                Scan QR Code and complete payment
+                Scan the QR code and complete your UPI payment, then enter the Transaction ID below.
             </p>
 
-            <!-- TRANSACTION ID -->
-
+            <!-- TRANSACTION ID ONLY — screenshot removed -->
             <input type="text"
                    id="transaction-id"
-                   placeholder="Enter Transaction ID">
+                   placeholder="Enter UPI Transaction ID">
 
-            <!-- SCREENSHOT -->
-
-            <input type="file"
-                   id="payment-screenshot">
-
-            <!-- BUTTON -->
-
+            <!-- CONFIRM BUTTON -->
             <button onclick="confirmPayment()">
-                Confirm Payment
+                Confirm & Place Order
             </button>
 
         </div>
@@ -83,5 +55,4 @@
     <script src="js/app.js"></script>
 
 </body>
-
 </html>

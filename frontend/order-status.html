@@ -2,247 +2,101 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
-
-    <title>Order Status</title>
-
-    <link rel="stylesheet"
-        href="css/style.css">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Status - Virushka Cafe</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
-    <!-- ========================= -->
-    <!-- HEADER -->
-    <!-- ========================= -->
+<header class="admin-navbar">
+    <h1>ORDER STATUS</h1>
+    <a href="menu.html" style="color: #ff5722; text-decoration: none; font-weight: 600; font-size: 14px;">+ New Order</a>
+</header>
 
-    <header>
+<!-- FIX: was "status-container" but CSS defines "status-section" -->
+<section class="status-section">
 
-        <h1>TRACK YOUR ORDER</h1>
+    <div class="status-box">
 
-    </header>
+        <h1>YOUR ORDER</h1>
 
-    <!-- ========================= -->
-    <!-- STATUS CONTAINER -->
-    <!-- ========================= -->
+        <h2 id="current-status">Loading...</h2>
 
-    <section class="status-container">
+        <div class="status-flow">
 
-        <div class="status-box">
+            <div class="status" id="step1">Waiting For Approval</div>
 
-            <h1>🍽️ VIRUSHKA CAFE</h1>
+            <div class="status" id="step2">Preparing</div>
 
-            <h2>Your Order Status</h2>
+            <div class="status" id="step3">Ready for Pickup</div>
 
-            <!-- LIVE STATUS -->
-
-            <div class="status-flow">
-
-                <div class="status active"
-                    id="status1">
-
-                    Payment Verified
-
-                </div>
-
-                <div class="status"
-                    id="status2">
-
-                    Preparing
-
-                </div>
-
-                <div class="status"
-                    id="status3">
-
-                    Ready
-
-                </div>
-
-                <div class="status"
-                    id="status4">
-
-                    Completed
-
-                </div>
-
-            </div>
-
-            <!-- ORDER DETAILS -->
-
-            <div class="live-order-info">
-
-                <p>
-                    <strong>Order ID:</strong>
-                    <span id="order-id">
-                        Loading...
-                    </span>
-                </p>
-
-                <p>
-                    <strong>Current Status:</strong>
-                    <span id="current-status">
-                        Loading...
-                    </span>
-                </p>
-
-            </div>
+            <div class="status" id="step4">Completed</div>
 
         </div>
 
-    </section>
+    </div>
 
-    <!-- ========================= -->
-    <!-- SCRIPT -->
-    <!-- ========================= -->
+</section>
 
-    <script>
+<script>
 
-        // =========================
-        // GET ORDER ID
-        // =========================
+const orderId = localStorage.getItem("latestOrderId");
 
-        const orderId =
-            localStorage.getItem("latestOrderId");
+async function loadOrderStatus() {
 
-        // DISPLAY ORDER ID
+    try {
 
-        document.getElementById(
-            "order-id"
-        ).innerText = orderId;
-
-        // =========================
-        // LOAD ORDER STATUS
-        // =========================
-
-        async function loadOrderStatus() {
-
-            try {
-
-                const response =
-                    await fetch(
-                        "http://127.0.0.1:5000/get-orders"
-                    );
-
-                const orders =
-                    await response.json();
-
-                // FIND CURRENT ORDER
-
-                const order =
-                    orders.find(
-                        o => o._id === orderId
-                    );
-
-                if (!order) return;
-
-                // DISPLAY CURRENT STATUS
-
-                document.getElementById(
-                    "current-status"
-                ).innerText =
-                    order.orderStatus;
-
-                // RESET
-
-                document.getElementById(
-                    "status1"
-                ).classList.remove("active");
-
-                document.getElementById(
-                    "status2"
-                ).classList.remove("active");
-
-                document.getElementById(
-                    "status3"
-                ).classList.remove("active");
-
-                document.getElementById(
-                    "status4"
-                ).classList.remove("active");
-
-                // STATUS FLOW
-
-                if (
-                    order.orderStatus ===
-                    "Preparing"
-                ) {
-
-                    document.getElementById(
-                        "status1"
-                    ).classList.add("active");
-
-                    document.getElementById(
-                        "status2"
-                    ).classList.add("active");
-                }
-
-                if (
-                    order.orderStatus ===
-                    "Ready"
-                ) {
-
-                    document.getElementById(
-                        "status1"
-                    ).classList.add("active");
-
-                    document.getElementById(
-                        "status2"
-                    ).classList.add("active");
-
-                    document.getElementById(
-                        "status3"
-                    ).classList.add("active");
-                }
-
-                if (
-                    order.orderStatus ===
-                    "Completed"
-                ) {
-
-                    document.getElementById(
-                        "status1"
-                    ).classList.add("active");
-
-                    document.getElementById(
-                        "status2"
-                    ).classList.add("active");
-
-                    document.getElementById(
-                        "status3"
-                    ).classList.add("active");
-
-                    document.getElementById(
-                        "status4"
-                    ).classList.add("active");
-                }
-
-            } catch (error) {
-
-                console.error(error);
-            }
+        if (!orderId) {
+            document.getElementById("current-status").innerText = "No Order Found";
+            return;
         }
 
-        // =========================
-        // AUTO LOAD
-        // =========================
+        const response = await fetch("http://127.0.0.1:5000/get-orders");
+        const orders = await response.json();
 
-        loadOrderStatus();
+        const order = orders.find(item => item._id === orderId);
 
-        // AUTO REFRESH
+        if (!order) {
+            document.getElementById("current-status").innerText = "Order Not Found";
+            return;
+        }
 
-        setInterval(
-            loadOrderStatus,
-            3000
-        );
+        const status = order.orderStatus;
 
-    </script>
+        document.getElementById("current-status").innerText = status;
+
+        // RESET ALL STEPS
+
+        ["step1", "step2", "step3", "step4"].forEach(id => {
+            document.getElementById(id).classList.remove("active");
+        });
+
+        // ACTIVATE STEPS PROGRESSIVELY
+
+        const steps = {
+            "Waiting For Approval": 1,
+            "Preparing": 2,
+            "Ready": 3,
+            "Completed": 4
+        };
+
+        const activeCount = steps[status] || 1;
+
+        for (let i = 1; i <= activeCount; i++) {
+            document.getElementById("step" + i).classList.add("active");
+        }
+
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+loadOrderStatus();
+setInterval(loadOrderStatus, 3000);
+
+</script>
 
 </body>
-
 </html>

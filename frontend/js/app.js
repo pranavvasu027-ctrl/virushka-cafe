@@ -8,84 +8,63 @@ let cart = JSON.parse(localStorage.getItem("cart")) || [];
 // ADD TO CART
 // ==========================
 
-function addToCart(name, price){
-
-    // CHECK IF ITEM ALREADY EXISTS
+function addToCart(name, price) {
 
     let existingItem = cart.find(item => item.name === name);
 
-    if(existingItem){
-
+    if (existingItem) {
         existingItem.quantity += 1;
-
-    }else{
-
-        cart.push({
-            name: name,
-            price: price,
-            quantity: 1
-        });
-
+    } else {
+        cart.push({ name: name, price: price, quantity: 1 });
     }
-
-    // SAVE TO LOCAL STORAGE
 
     localStorage.setItem("cart", JSON.stringify(cart));
 
-    alert(name + " added to cart");
+    alert(name + " added to cart!");
 }
 
 // ==========================
 // DISPLAY CART ITEMS
 // ==========================
 
-function displayCart(){
+function displayCart() {
 
     const cartItems = document.getElementById("cart-items");
-
     const totalPrice = document.getElementById("total-price");
 
-    // STOP IF CART PAGE NOT OPEN
-
-    if(!cartItems) return;
+    if (!cartItems) return;
 
     cartItems.innerHTML = "";
 
     let total = 0;
+
+    if (cart.length === 0) {
+        cartItems.innerHTML = `
+            <div style="text-align:center; padding: 60px 20px; color: #6b7280;">
+                <p style="font-size:18px;">Your cart is empty.</p>
+                <a href="menu.html" style="color:#ff5722; font-weight:600;">Browse Menu →</a>
+            </div>
+        `;
+        totalPrice.innerText = 0;
+        return;
+    }
 
     cart.forEach((item, index) => {
 
         total += item.price * item.quantity;
 
         cartItems.innerHTML += `
-        
-        <div class="cart-item">
-
-            <div>
-
-                <h3>${item.name}</h3>
-
-                <p>₹${item.price} x ${item.quantity}</p>
-
+            <div class="cart-item">
+                <div>
+                    <h3>${item.name}</h3>
+                    <p>₹${item.price} × ${item.quantity} = ₹${item.price * item.quantity}</p>
+                </div>
+                <div>
+                    <button onclick="increaseQuantity(${index})">+</button>
+                    <button onclick="decreaseQuantity(${index})">−</button>
+                    <button onclick="removeItem(${index})">Remove</button>
+                </div>
             </div>
-
-            <div>
-
-                <button onclick="increaseQuantity(${index})">
-                    +
-                </button>
-
-                <button onclick="decreaseQuantity(${index})">
-                    -
-                </button>
-
-                <button onclick="removeItem(${index})">
-                    Remove
-                </button>
-
-            </div>
-
-        </div>
         `;
     });
 
@@ -96,10 +75,8 @@ function displayCart(){
 // INCREASE QUANTITY
 // ==========================
 
-function increaseQuantity(index){
-
+function increaseQuantity(index) {
     cart[index].quantity++;
-
     updateCart();
 }
 
@@ -107,17 +84,12 @@ function increaseQuantity(index){
 // DECREASE QUANTITY
 // ==========================
 
-function decreaseQuantity(index){
-
-    if(cart[index].quantity > 1){
-
+function decreaseQuantity(index) {
+    if (cart[index].quantity > 1) {
         cart[index].quantity--;
-
-    }else{
-
+    } else {
         cart.splice(index, 1);
     }
-
     updateCart();
 }
 
@@ -125,10 +97,8 @@ function decreaseQuantity(index){
 // REMOVE ITEM
 // ==========================
 
-function removeItem(index){
-
+function removeItem(index) {
     cart.splice(index, 1);
-
     updateCart();
 }
 
@@ -136,10 +106,8 @@ function removeItem(index){
 // UPDATE CART
 // ==========================
 
-function updateCart(){
-
+function updateCart() {
     localStorage.setItem("cart", JSON.stringify(cart));
-
     displayCart();
 }
 
@@ -153,20 +121,13 @@ displayCart();
 // PAYMENT TOTAL
 // ==========================
 
-function loadPaymentTotal(){
+function loadPaymentTotal() {
 
-    const paymentTotal =
-        document.getElementById("payment-total");
-
-    if(!paymentTotal) return;
+    const paymentTotal = document.getElementById("payment-total");
+    if (!paymentTotal) return;
 
     let total = 0;
-
-    cart.forEach(item => {
-
-        total += item.price * item.quantity;
-    });
-
+    cart.forEach(item => { total += item.price * item.quantity; });
     paymentTotal.innerText = total;
 }
 
@@ -176,92 +137,70 @@ loadPaymentTotal();
 // CONFIRM PAYMENT
 // ==========================
 
-async function confirmPayment(){
+async function confirmPayment() {
 
-    const transactionId =
-        document.getElementById("transaction-id").value;
-
-    const screenshot =
-        document.getElementById("payment-screenshot").files[0];
+    const transactionId = document.getElementById("transaction-id").value.trim();
 
     // VALIDATION
 
-    if(transactionId === ""){
-
-        alert("Please enter transaction ID");
-
+    if (transactionId === "") {
+        alert("Please enter your Transaction ID");
         return;
     }
 
-    if(!screenshot){
-
-        alert("Please upload payment screenshot");
-
+    if (cart.length === 0) {
+        alert("Your cart is empty. Please add items first.");
         return;
     }
 
     // TOTAL CALCULATION
 
     let total = 0;
-
-    cart.forEach(item => {
-
-        total += item.price * item.quantity;
-    });
+    cart.forEach(item => { total += item.price * item.quantity; });
 
     // ORDER DATA
 
     const orderData = {
-
         items: cart,
-
         totalAmount: total,
-
         transactionId: transactionId,
-
         paymentStatus: "Pending Verification"
     };
 
-    try{
+    try {
 
-        // SEND DATA TO FLASK BACKEND
-
-        const response = await fetch(
-            "http://127.0.0.1:5000/place-order",
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify(orderData)
-            }
-        );
+        const response = await fetch("http://127.0.0.1:5000/place-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(orderData)
+        });
 
         const result = await response.json();
 
-        console.log(result);
+        if (!result.success) {
+            alert("Order failed: " + result.message);
+            return;
+        }
 
-        alert("Order placed successfully!");
+        // SAVE ORDER ID FOR STATUS PAGE
+
+        localStorage.setItem("latestOrderId", result.orderId);
+
+        alert("Order placed successfully! Redirecting to order status...");
 
         // CLEAR CART
 
         localStorage.removeItem("cart");
+        cart = [];
 
         // REDIRECT
 
         setTimeout(() => {
-
-            window.location.href =
-                "order-status.html";
-
+            window.location.href = "order-status.html";
         }, 1000);
 
-    }catch(error){
-
+    } catch (error) {
         console.error(error);
-
-        alert("Server connection failed");
+        alert("Cannot connect to server. Make sure Flask is running on port 5000.");
     }
 }

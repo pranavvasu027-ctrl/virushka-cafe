@@ -1,460 +1,365 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Virushka Cafe Admin</title>
-
+    <title>Virushka Cafe - Admin</title>
     <link rel="stylesheet" href="css/style.css">
-
 </head>
-
 <body>
 
-    <!-- ========================= -->
-    <!-- HEADER -->
-    <!-- ========================= -->
+<script>
+    if (localStorage.getItem("adminLoggedIn") !== "true") {
+        window.location.href = "admin-login.html";
+    }
+</script>
 
-    <header>
+<!-- NAVBAR -->
+<header class="admin-navbar">
+    <h1>⚡ VIRUSHKA CAFE — ADMIN</h1>
+    <button onclick="logout()" class="logout-btn">Logout</button>
+</header>
 
-        <h1>VIRUSHKA CAFE ADMIN</h1>
-
-    </header>
-
-    <!-- ========================= -->
-    <!-- DASHBOARD -->
-    <!-- ========================= -->
-
-    <section class="dashboard">
-
-        <div class="card">
-
+<!-- DASHBOARD STATS -->
+<section class="dashboard">
+    <div class="dashboard-card">
+        <div class="dashboard-icon">🧾</div>
+        <div class="dashboard-info">
             <h2 id="total-orders">0</h2>
-
             <p>Total Orders</p>
-
         </div>
-
-        <div class="card pending">
-
+    </div>
+    <div class="dashboard-card">
+        <div class="dashboard-icon">⏳</div>
+        <div class="dashboard-info">
             <h2 id="pending-orders">0</h2>
-
-            <p>Pending Orders</p>
-
+            <p>Pending Payment</p>
         </div>
-
-        <div class="card verified">
-
+    </div>
+    <div class="dashboard-card">
+        <div class="dashboard-icon">✅</div>
+        <div class="dashboard-info">
             <h2 id="verified-orders">0</h2>
-
             <p>Verified Orders</p>
-
         </div>
-
-        <div class="card earnings">
-
+    </div>
+    <div class="dashboard-card">
+        <div class="dashboard-icon">💰</div>
+        <div class="dashboard-info">
             <h2>₹<span id="total-earnings">0</span></h2>
-
             <p>Total Earnings</p>
+        </div>
+    </div>
+</section>
+
+<!-- ANALYTICS SECTION -->
+<section class="analytics-section">
+
+    <div class="analytics-header" onclick="toggleAnalytics()">
+        <h2>📊 Monthly Revenue Analytics</h2>
+        <span id="analytics-toggle">▼ Show</span>
+    </div>
+
+    <div id="analytics-body" style="display:none;">
+
+        <div id="analytics-loading" style="text-align:center; padding:30px; color:#6b7280;">
+            Loading analytics...
+        </div>
+
+        <div id="analytics-content" style="display:none;">
+
+            <!-- MONTH SUMMARY CARDS -->
+            <div id="analytics-cards" class="analytics-cards"></div>
+
+            <!-- BAR CHART -->
+            <div class="chart-container">
+                <h3 class="chart-title">Revenue by Month (₹)</h3>
+                <div id="bar-chart" class="bar-chart"></div>
+                <div id="chart-labels" class="chart-labels"></div>
+            </div>
 
         </div>
 
-    </section>
+        <div id="analytics-empty" style="display:none; text-align:center; padding:30px; color:#6b7280;">
+            <p>No verified orders yet. Verify payments to see revenue analytics.</p>
+        </div>
 
-    <!-- ========================= -->
-    <!-- ORDERS -->
-    <!-- ========================= -->
+    </div>
 
-    <section class="orders-section">
+</section>
 
-        <h2>All Orders</h2>
+<!-- REFRESH BAR -->
+<div class="refresh-bar">
+    <span id="refresh-indicator"></span>
+    Auto-refreshing every 5 seconds
+</div>
 
-        <div id="orders-container"></div>
+<!-- ORDERS SECTION -->
+<section class="orders-section">
+    <div class="orders-header">
+        <h1>All Orders</h1>
+        <span class="orders-count-badge" id="orders-count-badge">0 orders</span>
+    </div>
+    <div class="orders-grid" id="orders-container"></div>
+</section>
 
-    </section>
 
-    <!-- ========================= -->
-    <!-- SCRIPT -->
-    <!-- ========================= -->
+<script>
 
-    <script>
+// ==========================================
+// LOGOUT
+// ==========================================
 
-        // =========================
-        // LOAD ORDERS
-        // =========================
+function logout() {
+    localStorage.removeItem("adminLoggedIn");
+    window.location.href = "admin-login.html";
+}
 
-        async function loadOrders() {
+// ==========================================
+// BADGE HELPERS
+// ==========================================
 
-            try {
+function getPaymentBadge(status) {
+    if (status === "Verified")
+        return `<span class="badge badge-verified">✓ Verified</span>`;
+    return `<span class="badge badge-pending">⏳ Pending Verification</span>`;
+}
 
-                const response =
-                    await fetch(
-                        "http://127.0.0.1:5000/get-orders"
-                    );
+function getStatusBadge(status) {
+    const map = {
+        "Waiting For Approval": "badge-waiting",
+        "Preparing":            "badge-preparing",
+        "Ready":                "badge-ready",
+        "Completed":            "badge-completed"
+    };
+    return `<span class="badge ${map[status] || 'badge-waiting'}">${status}</span>`;
+}
 
-                const orders =
-                    await response.json();
+// ==========================================
+// LOAD ORDERS
+// ==========================================
 
-                const container =
-                    document.getElementById(
-                        "orders-container"
-                    );
+async function loadOrders() {
+    try {
+        const response = await fetch("http://127.0.0.1:5000/get-orders");
+        const orders   = await response.json();
 
-                container.innerHTML = "";
+        const container = document.getElementById("orders-container");
+        container.innerHTML = "";
 
-                // DASHBOARD VALUES
+        let total    = orders.length;
+        let pending  = 0;
+        let verified = 0;
+        let earnings = 0;
 
-                let totalOrders = orders.length;
+        if (total === 0) {
+            container.innerHTML = `
+                <div class="no-orders" style="grid-column:1/-1;">
+                    <h2>No orders yet</h2>
+                    <p>Orders placed by customers will appear here.</p>
+                </div>`;
+            updateStats(0, 0, 0, 0);
+            return;
+        }
 
-                let pendingOrders = 0;
+        orders.slice().reverse().forEach(order => {
 
-                let verifiedOrders = 0;
+            if (order.paymentStatus === "Pending Verification") pending++;
+            if (order.paymentStatus === "Verified") {
+                verified++;
+                earnings += order.totalAmount;
+            }
 
-                let earnings = 0;
+            const orderNum = order.orderNumber
+                ? `<span class="order-number">#${order.orderNumber}</span>`
+                : "";
 
-                // LOOP THROUGH ORDERS
+            let itemsHTML = "";
+            order.items.forEach(item => {
+                itemsHTML += `
+                    <p>
+                        <span>${item.name}</span>
+                        <strong>x${item.quantity} — ₹${item.price * item.quantity}</strong>
+                    </p>`;
+            });
 
-                orders.reverse().forEach(order => {
+            container.innerHTML += `
+                <div class="order-card">
 
-                    if (
-                        order.paymentStatus ===
-                        "Pending Verification"
-                    ) {
-
-                        pendingOrders++;
-                    }
-
-                    if (
-                        order.paymentStatus ===
-                        "Verified"
-                    ) {
-
-                        verifiedOrders++;
-
-                        earnings += order.totalAmount;
-                    }
-
-                    // ITEMS LIST
-
-                    let itemsHTML = "";
-
-                    order.items.forEach(item => {
-
-                        itemsHTML += `
-                        
-                        <li>
-                            ${item.name}
-                            x ${item.quantity}
-                            - ₹${item.price}
-                        </li>
-                        `;
-                    });
-
-                    // ORDER CARD
-
-                    const orderDiv =
-                        document.createElement("div");
-
-                    orderDiv.classList.add(
-                        "order-card"
-                    );
-
-                    // STATUS COLOR
-
-                    let statusClass =
-                        "pending-status";
-
-                    if (
-                        order.orderStatus ===
-                        "Preparing"
-                    ) {
-
-                        statusClass =
-                            "preparing-status";
-                    }
-
-                    if (
-                        order.orderStatus ===
-                        "Ready"
-                    ) {
-
-                        statusClass =
-                            "ready-status";
-                    }
-
-                    if (
-                        order.orderStatus ===
-                        "Completed"
-                    ) {
-
-                        statusClass =
-                            "completed-status";
-                    }
-
-                    // HTML
-
-                    orderDiv.innerHTML = `
-
-                    <div class="top-row">
-
-                        <h3>
-                        Order ID:
-                        ${order._id}
-                        </h3>
-
-                        <span class="${statusClass}">
-                            ${order.orderStatus}
-                        </span>
-
+                    <div class="order-card-header">
+                        <div>
+                            ${orderNum}
+                            <div class="order-id">ID: ${order._id}</div>
+                        </div>
+                        <div class="order-amount">₹${order.totalAmount}</div>
                     </div>
 
-                    <p>
-                    <strong>Transaction ID:</strong>
-                    ${order.transactionId}
-                    </p>
+                    <div class="order-meta">
+                        <div class="order-meta-row">
+                            <strong>Transaction ID</strong>
+                            <span>${order.transactionId}</span>
+                        </div>
+                        <div class="order-meta-row">
+                            <strong>Payment</strong>
+                            ${getPaymentBadge(order.paymentStatus)}
+                        </div>
+                        <div class="order-meta-row">
+                            <strong>Order Status</strong>
+                            ${getStatusBadge(order.orderStatus)}
+                        </div>
+                    </div>
 
-                    <p>
-                    <strong>Payment:</strong>
-                    ${order.paymentStatus}
-                    </p>
-
-                    <p>
-                    <strong>Total:</strong>
-                    ₹${order.totalAmount}
-                    </p>
-
-                    <strong>Items:</strong>
-
-                    <ul>
+                    <div class="order-items">
+                        <h4>Items Ordered</h4>
                         ${itemsHTML}
-                    </ul>
+                    </div>
 
                     <div class="button-group">
-
-                        <button class="verify-btn"
-                        onclick="verifyOrder(
-                            '${order._id}'
-                        )">
-
-                            Verify
-
-                        </button>
-
-                        <button class="prepare-btn"
-                        onclick="updateStatus(
-                            '${order._id}',
-                            'Preparing'
-                        )">
-
-                            Preparing
-
-                        </button>
-
-                        <button class="ready-btn"
-                        onclick="updateStatus(
-                            '${order._id}',
-                            'Ready'
-                        )">
-
-                            Ready
-
-                        </button>
-
-                        <button class="complete-btn"
-                        onclick="updateStatus(
-                            '${order._id}',
-                            'Completed'
-                        )">
-
-                            Completed
-
-                        </button>
-
-                        <button class="delete-btn"
-                        onclick="deleteOrder(
-                            '${order._id}'
-                        )">
-
-                            Delete
-
-                        </button>
-
+                        <button class="btn-action btn-verify"
+                            onclick="verifyOrder('${order._id}')">✓ Verify</button>
+                        <button class="btn-action btn-preparing"
+                            onclick="updateStatus('${order._id}','Preparing')">🔥 Preparing</button>
+                        <button class="btn-action btn-ready"
+                            onclick="updateStatus('${order._id}','Ready')">🛎 Ready</button>
+                        <button class="btn-action btn-completed"
+                            onclick="updateStatus('${order._id}','Completed')">✅ Completed</button>
+                        <button class="btn-action btn-delete"
+                            onclick="deleteOrder('${order._id}')">🗑</button>
                     </div>
-                    `;
 
-                    container.appendChild(orderDiv);
+                </div>`;
+        });
 
-                });
+        updateStats(total, pending, verified, earnings);
 
-                // DASHBOARD UPDATE
+    } catch (err) {
+        console.error(err);
+        alert("Failed to load orders. Make sure Flask server is running on port 5000.");
+    }
+}
 
-                document.getElementById(
-                    "total-orders"
-                ).innerText = totalOrders;
+function updateStats(total, pending, verified, earnings) {
+    document.getElementById("total-orders").innerText    = total;
+    document.getElementById("pending-orders").innerText  = pending;
+    document.getElementById("verified-orders").innerText = verified;
+    document.getElementById("total-earnings").innerText  = earnings;
+    document.getElementById("orders-count-badge").innerText =
+        `${total} order${total !== 1 ? "s" : ""}`;
+}
 
-                document.getElementById(
-                    "pending-orders"
-                ).innerText = pendingOrders;
+// ==========================================
+// VERIFY / STATUS / DELETE
+// ==========================================
 
-                document.getElementById(
-                    "verified-orders"
-                ).innerText = verifiedOrders;
+async function verifyOrder(orderId) {
+    await fetch("http://127.0.0.1:5000/verify-order", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({orderId})
+    });
+    loadOrders();
+    loadAnalytics();
+}
 
-                document.getElementById(
-                    "total-earnings"
-                ).innerText = earnings;
+async function updateStatus(orderId, status) {
+    await fetch("http://127.0.0.1:5000/update-status", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({orderId, status})
+    });
+    loadOrders();
+}
 
-            } catch (error) {
+async function deleteOrder(orderId) {
+    if (!confirm("Delete this order?")) return;
+    await fetch("http://127.0.0.1:5000/delete-order", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({orderId})
+    });
+    loadOrders();
+    loadAnalytics();
+}
 
-                console.error(error);
+// ==========================================
+// ANALYTICS
+// ==========================================
 
-                alert("Failed to load orders");
-            }
+let analyticsOpen = false;
+
+function toggleAnalytics() {
+    analyticsOpen = !analyticsOpen;
+    const body   = document.getElementById("analytics-body");
+    const toggle = document.getElementById("analytics-toggle");
+    body.style.display   = analyticsOpen ? "block" : "none";
+    toggle.textContent   = analyticsOpen ? "▲ Hide" : "▼ Show";
+    if (analyticsOpen) loadAnalytics();
+}
+
+async function loadAnalytics() {
+    try {
+        const res  = await fetch("http://127.0.0.1:5000/get-analytics");
+        const json = await res.json();
+
+        const loading = document.getElementById("analytics-loading");
+        const content = document.getElementById("analytics-content");
+        const empty   = document.getElementById("analytics-empty");
+
+        loading.style.display = "none";
+
+        if (!json.success || json.data.length === 0) {
+            empty.style.display   = "block";
+            content.style.display = "none";
+            return;
         }
 
-        // =========================
-        // VERIFY ORDER
-        // =========================
+        empty.style.display   = "none";
+        content.style.display = "block";
 
-        async function verifyOrder(orderId) {
+        const data = json.data;
 
-            try {
+        // SUMMARY CARDS
+        const cardsEl = document.getElementById("analytics-cards");
+        cardsEl.innerHTML = "";
+        data.forEach(m => {
+            cardsEl.innerHTML += `
+                <div class="analytics-card">
+                    <div class="analytics-month">${m.label}</div>
+                    <div class="analytics-revenue">₹${m.revenue.toLocaleString()}</div>
+                    <div class="analytics-orders">${m.orderCount} order${m.orderCount !== 1 ? "s" : ""}</div>
+                </div>`;
+        });
 
-                const response =
-                    await fetch(
-                        "http://127.0.0.1:5000/verify-order",
-                        {
-                            method: "POST",
+        // BAR CHART
+        const maxRevenue = Math.max(...data.map(d => d.revenue));
+        const chartEl    = document.getElementById("bar-chart");
+        const labelsEl   = document.getElementById("chart-labels");
+        chartEl.innerHTML  = "";
+        labelsEl.innerHTML = "";
 
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
+        data.forEach(m => {
+            const pct = maxRevenue > 0 ? (m.revenue / maxRevenue) * 100 : 0;
+            chartEl.innerHTML += `
+                <div class="bar-wrapper">
+                    <div class="bar-value">₹${m.revenue.toLocaleString()}</div>
+                    <div class="bar" style="height:${Math.max(pct, 4)}%"
+                         title="${m.label}: ₹${m.revenue}"></div>
+                </div>`;
+            labelsEl.innerHTML += `<div class="chart-label">${m.label}</div>`;
+        });
 
-                            body: JSON.stringify({
-                                orderId: orderId
-                            })
-                        }
-                    );
+    } catch (err) {
+        console.error("Analytics error:", err);
+    }
+}
 
-                const result =
-                    await response.json();
+// ==========================================
+// START
+// ==========================================
 
-                alert(result.message);
+loadOrders();
+setInterval(loadOrders, 5000);
 
-                loadOrders();
-
-            } catch (error) {
-
-                console.error(error);
-            }
-        }
-
-        // =========================
-        // UPDATE STATUS
-        // =========================
-
-        async function updateStatus(
-            orderId,
-            status
-        ) {
-
-            try {
-
-                const response =
-                    await fetch(
-                        "http://127.0.0.1:5000/update-status",
-                        {
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body: JSON.stringify({
-
-                                orderId: orderId,
-
-                                status: status
-                            })
-                        }
-                    );
-
-                const result =
-                    await response.json();
-
-                alert(result.message);
-
-                loadOrders();
-
-            } catch (error) {
-
-                console.error(error);
-            }
-        }
-
-        // =========================
-        // DELETE ORDER
-        // =========================
-
-        async function deleteOrder(orderId) {
-
-            const confirmDelete =
-                confirm(
-                    "Delete this order?"
-                );
-
-            if (!confirmDelete) return;
-
-            try {
-
-                const response =
-                    await fetch(
-                        "http://127.0.0.1:5000/delete-order",
-                        {
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body: JSON.stringify({
-                                orderId: orderId
-                            })
-                        }
-                    );
-
-                const result =
-                    await response.json();
-
-                alert(result.message);
-
-                loadOrders();
-
-            } catch (error) {
-
-                console.error(error);
-            }
-        }
-
-        // =========================
-        // AUTO LOAD
-        // =========================
-
-        loadOrders();
-
-        // AUTO REFRESH
-
-        setInterval(loadOrders, 5000);
-
-    </script>
-
+</script>
 </body>
-
 </html>
